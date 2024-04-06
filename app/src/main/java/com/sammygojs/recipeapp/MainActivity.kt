@@ -23,12 +23,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
@@ -110,97 +112,94 @@ fun ListApp() {
         composable("recipeList") {
             RecipeListScreen(navController)
         }
-        composable("recipeDetail") {
-            RecipeDetailScreen(navController)
-        }
-    }
-}
-
-@Composable
-fun RecipeListScreen(navController: NavHostController) {
-    @Composable
-    fun RecipeList(recipes: List<Recipe>, onItemClick: (Recipe) -> Unit) {
-        LazyColumn {
-            items(recipes) { recipe ->
-                RecipeItem(recipe = recipe, onItemClick = onItemClick)
+        composable("recipeDetail/{recipeName}") { backStackEntry ->
+            val recipeName = backStackEntry.arguments?.getString("recipeName")
+            if (recipeName != null) {
+                val recipe = recipes.find { it.name == recipeName }
+                if (recipe != null) {
+                    RecipeDetailScreen(recipe = recipe, navController = navController)
+                } else {
+                    // Handle invalid recipe name
+                }
+            } else {
+                // Handle missing recipe name
             }
         }
     }
-    // Your RecipeList composable here
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RecipeListScreen(navController: NavHostController) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Recipe List") }
+            )
+        },
+        content = {
+            Column(modifier = Modifier
+                .padding(top = 75.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
+                .fillMaxWidth()) {
+                recipes.forEach { recipe ->
+                    RecipeItem(recipe = recipe, onItemClick = {
+                        navController.navigate("recipeDetail/${recipe.name}")
+                    })
+                }
+            }
+        }
+    )
+}
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RecipeDetailScreen(recipe: Recipe, navController: NavHostController) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = recipe.name) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
+        content = {
+            Column(
+                modifier = Modifier
+                    .padding(top = 75.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = "Time: ${recipe.time}", fontSize = 20.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = recipe.description, fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = "Instructions:", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(text = recipe.instructions, fontSize = 16.sp)
+            }
+        }
+    )
+}
 
 @Composable
-fun RecipeItem(recipe: Recipe, onItemClick: (Recipe) -> Unit) {
+fun RecipeItem(recipe: Recipe, onItemClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onItemClick(recipe) },
-//        elevation = 4.dp
+            .padding(vertical = 8.dp),
     ) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
+                .clickable { onItemClick() }
         ) {
             Text(text = recipe.name, fontSize = 20.sp)
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Time: ${recipe.time}", color = Color.Gray)
         }
     }
-}
-
-
-@Composable
-fun RecipeDetailScreen(navController: NavHostController) {
-    @Composable
-    fun RecipeDetail(recipe: Recipe) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 56.dp, start = 16.dp, end = 16.dp, bottom = 16.dp), // Adjust the top padding to accommodate the top app bar
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
-        ) {
-            Text(
-                text = recipe.name,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Text(
-                text = "Time: ${recipe.time}",
-                fontSize = 18.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            Text(
-                text = recipe.description,
-                fontSize = 18.sp,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            Text(
-                text = "Instructions:",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Text(
-                text = recipe.instructions,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Start
-            )
-        }
-    }
-    Button(
-        onClick = { navController.navigate("recipeList") }
-    ) {
-        Text("Go back to recipe list")
-    }
-
 }
