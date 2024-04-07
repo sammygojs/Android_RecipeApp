@@ -14,23 +14,29 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.sammygojs.recipeapp.ui.theme.RecipeAppTheme
 import android.widget.Toast
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
@@ -125,6 +131,9 @@ fun ListApp() {
                 // Handle missing recipe name
             }
         }
+        composable("addRecipe") {
+            AddRecipeScreen(navController = navController)
+        }
     }
 }
 
@@ -132,6 +141,8 @@ fun ListApp() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeListScreen(navController: NavHostController) {
+    var showDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -139,17 +150,59 @@ fun RecipeListScreen(navController: NavHostController) {
             )
         },
         content = {
-            Column(modifier = Modifier
-                .padding(top = 75.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
-                .fillMaxWidth()) {
-                recipes.forEach { recipe ->
-                    RecipeItem(recipe = recipe, onItemClick = {
-                        navController.navigate("recipeDetail/${recipe.name}")
-                    })
+            Box(
+                modifier = Modifier
+                    .padding(top=45.dp)
+                    .fillMaxSize()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 16.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    recipes.forEach { recipe ->
+                        RecipeItem(recipe = recipe, onItemClick = {
+                            navController.navigate("recipeDetail/${recipe.name}")
+                        })
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(32.dp)
+                ) {
+                    FloatingActionButton(
+//                        onClick = { showDialog = true },
+                        onClick = { navController.navigate("addRecipe") },
+                        contentColor = Color.White,
+//                        backgroundColor = Color.Green
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add")
+                    }
                 }
             }
         }
     )
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Add New Recipe") },
+            text = { Text("Feature to add new recipes is not yet implemented.") },
+            confirmButton = {
+                Button(
+                    onClick = { showDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("Close")
+                }
+            }
+        )
+    }
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -202,4 +255,74 @@ fun RecipeItem(recipe: Recipe, onItemClick: () -> Unit) {
             Text(text = "Time: ${recipe.time}", color = Color.Gray)
         }
     }
+}
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddRecipeScreen(navController: NavHostController) {
+    var recipeName by remember { mutableStateOf("") }
+    var recipeTime by remember { mutableStateOf("") }
+    var recipeDescription by remember { mutableStateOf("") }
+    var recipeInstructions by remember { mutableStateOf("") }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Add Recipe") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
+        content = {
+            Column(
+                modifier = Modifier
+                    .padding(top = 50.dp)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                OutlinedTextField(
+                    value = recipeName,
+                    onValueChange = { recipeName = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = recipeTime,
+                    onValueChange = { recipeTime = it },
+                    label = { Text("Time") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = recipeDescription,
+                    onValueChange = { recipeDescription = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = recipeInstructions,
+                    onValueChange = { recipeInstructions = it },
+                    label = { Text("Instructions") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        // Save recipe or perform other actions
+                        // For now, just navigate back to the previous screen
+                        navController.popBackStack()
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Save")
+                }
+            }
+        }
+    )
 }
